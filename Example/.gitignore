@@ -1,0 +1,12 @@
+# Secrets and generated config (do not commit)
+.env
+
+# Script state: last sync timestamp (updated by run-backfill.sh)
+.last-sync-utc
+
+# Generated configs (from templates + .env and .last-sync-utc)
+config/migrationsettings.full-sync.json
+config/migrationsettings.backfill.json
+
+# Environment variables
+.env

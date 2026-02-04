@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.Composition;
+using System.Collections.Generic;
+using System.ComponentModel.Composition;
+using System.Linq;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Identity;
@@ -54,13 +56,15 @@ namespace Cosmos.DataTransfer.AzureTableAPIExtension
 
             logger.LogInformation("Using PartitionKeyFieldName: `{ParitionKeyFieldName}` and RowKeyFieldName: `{RowKeyFieldName}`", settings.PartitionKeyFieldName, settings.RowKeyFieldName);
 
+            var propertyRenames = BuildPropertyRenames(settings);
+
             await Parallel.ForEachAsync<IDataItem>(dataItems,
             new ParallelOptions { MaxDegreeOfParallelism = maxConcurrency, CancellationToken = cancellationToken },
             async (item, ct) =>
             {
                 try
                 {
-                    var entity = item.ToTableEntity(settings.PartitionKeyFieldName, settings.RowKeyFieldName);
+                    var entity = item.ToTableEntity(settings.PartitionKeyFieldName, settings.RowKeyFieldName, propertyRenames);
                     await AddEntityWithRetryAsync(tableClient, entity, writeMode, ct);
                 }
                 catch (Exception ex)
@@ -74,6 +78,25 @@ namespace Cosmos.DataTransfer.AzureTableAPIExtension
         public IEnumerable<IDataExtensionSettings> GetSettings()
         {
             yield return new AzureTableAPIDataSinkSettings();
+        }
+
+        /// <summary>
+        /// Builds the property renames map from PropertyRenames list and legacy IdPropertyRename (for "id" only if not in list).
+        /// </summary>
+        private static IReadOnlyDictionary<string, string>? BuildPropertyRenames(AzureTableAPIDataSinkSettings settings)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+
+            if (settings.PropertyRenames != null)
+            {
+                foreach (var r in settings.PropertyRenames.Where(r => !string.IsNullOrWhiteSpace(r.From) && !string.IsNullOrWhiteSpace(r.To)))
+                    dict[r.From!] = r.To!;
+            }
+
+            if (!string.IsNullOrWhiteSpace(settings.IdPropertyRename) && !dict.ContainsKey("id"))
+                dict["id"] = settings.IdPropertyRename;
+
+            return dict.Count > 0 ? dict : null;
         }
 
         /// <summary>

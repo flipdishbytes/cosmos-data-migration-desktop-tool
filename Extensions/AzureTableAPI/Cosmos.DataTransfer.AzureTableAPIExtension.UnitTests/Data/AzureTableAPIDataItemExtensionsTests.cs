@@ -1,4 +1,5 @@
-﻿using Cosmos.DataTransfer.AzureTableAPIExtension.Data;
+using System.Collections.Generic;
+using Cosmos.DataTransfer.AzureTableAPIExtension.Data;
 
 namespace Cosmos.DataTransfer.AzureTableAPIExtension.UnitTests.Data
 {
@@ -163,6 +164,58 @@ namespace Cosmos.DataTransfer.AzureTableAPIExtension.UnitTests.Data
             Assert.AreEqual(2, entity.Keys.Count());
             Assert.AreEqual("Tailspin", entity.PartitionKey);
             Assert.AreEqual("456", entity.RowKey);
+        }
+
+        [TestMethod]
+        public void AzureTableAPIDataItem_PropertyRenames_IdToEntityId()
+        {
+            var dataitem = new MockDataItem(new Dictionary<string, object>()
+            {
+                { "id", "guid-123" },
+                { "Name", "Test" }
+            });
+            var renames = new Dictionary<string, string>(System.StringComparer.InvariantCultureIgnoreCase) { ["id"] = "entityId" };
+
+            var entity = dataitem.ToTableEntity(null, null, renames);
+            Assert.IsFalse(entity.ContainsKey("id"));
+            Assert.IsTrue(entity.ContainsKey("entityId"));
+            Assert.AreEqual("guid-123", entity.GetString("entityId"));
+            Assert.AreEqual("Test", entity.GetString("Name"));
+        }
+
+        [TestMethod]
+        public void AzureTableAPIDataItem_PropertyRenames_ReservedIdSkippedWhenNoRename()
+        {
+            var dataitem = new MockDataItem(new Dictionary<string, object>()
+            {
+                { "id", "guid-123" },
+                { "Name", "Test" }
+            });
+
+            var entity = dataitem.ToTableEntity(null, null, propertyRenames: null);
+            Assert.IsFalse(entity.ContainsKey("id"));
+            Assert.AreEqual("Test", entity.GetString("Name"));
+        }
+
+        [TestMethod]
+        public void AzureTableAPIDataItem_PropertyRenames_Multiple()
+        {
+            var dataitem = new MockDataItem(new Dictionary<string, object>()
+            {
+                { "id", "v1" },
+                { "etag", "v2" },
+                { "Name", "Test" }
+            });
+            var renames = new Dictionary<string, string>(System.StringComparer.InvariantCultureIgnoreCase)
+            {
+                ["id"] = "entityId",
+                ["etag"] = "entityEtag"
+            };
+
+            var entity = dataitem.ToTableEntity(null, null, renames);
+            Assert.AreEqual("v1", entity.GetString("entityId"));
+            Assert.AreEqual("v2", entity.GetString("entityEtag"));
+            Assert.AreEqual("Test", entity.GetString("Name"));
         }
     }
 }

@@ -1,0 +1,18 @@
+{
+  "Source": "AzureTableAPI",
+  "Sink": "AzureTableAPI",
+  "SourceSettings": {
+    "ConnectionString": "__STORAGE_CONNECTION_STRING__"
+  },
+  "SinkSettings": {
+    "ConnectionString": "__COSMOS_CONNECTION_STRING__",
+    "WriteMode": "Replace",
+    "PropertyRenames": [
+      { "From": "id", "To": "entityId" }
+    ]
+  },
+  "Operations": [
+    { "SourceSettings": { "Table": "testmigration" }, "SinkSettings": { "Table": "testmigration" } },
+    { "SourceSettings": { "Table": "testmigration2" }, "SinkSettings": { "Table": "testmigration2" } }
+  ]
+}

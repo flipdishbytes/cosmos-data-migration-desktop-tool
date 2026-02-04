@@ -1,0 +1,19 @@
+# Steps 2 & 4: Backfill – sync only entities changed since last run.
+# Builds the tool from source (context = repo root).
+# Usage: ./scripts/run-backfill.sh   (script fills QueryFilter and updates last-sync time)
+# Do not run manually; the script generates config/migrationsettings.backfill.json from the template.
+
+version: "3"
+
+services:
+  dmt:
+    platform: linux/arm64
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        RUNTIME: linux-arm64
+    volumes:
+      - ./config:/config
+      - ./data:/data
+    command: run --settings /config/migrationsettings.backfill.json

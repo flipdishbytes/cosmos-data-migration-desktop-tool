@@ -122,6 +122,8 @@ The following settings are supported for the Sink:
   - `Create` (default): Creates new entities only. Fails if an entity with the same partition key and row key already exists.
   - `Replace`: Upserts entities, completely replacing existing ones if they exist.
   - `Merge`: Upserts entities, merging properties with existing entities if they exist.
+- `PropertyRenames` - List of property renames when writing to the sink. Use for Cosmos DB Table API reserved names (`id`, `etag`, `rid`, `ResourceId`) or any source property you want under a different name. Format: `[ { "From": "sourceName", "To": "newName" }, ... ]`. Example: `[ { "From": "id", "To": "entityId" }, { "From": "etag", "To": "entityEtag" } ]`. Matching is case-insensitive for the source name. Reserved properties not listed are omitted when writing (so Cosmos DB does not fail with `PropertyNameInvalid`).
+- `IdPropertyRename` - **Legacy.** Same as adding `{ "From": "id", "To": "<value>" }` to `PropertyRenames`. If both are set, `PropertyRenames` takes precedence for `id`.
 
 ## Authentication Methods
 
@@ -187,6 +189,20 @@ The following are a couple example `settings.json` files for configuring the Azu
   "RowKeyFieldName": "id",
   "WriteMode": "Replace",
   "MaxConcurrentEntityWrites": 5
+}
+```
+
+**Cosmos DB Table API sink with property renames** (e.g. reserved `id` and `etag`):
+
+```json
+{
+  "ConnectionString": "AccountEndpoint=https://<account>.table.cosmos.azure.com;AccountKey=<key>;",
+  "Table": "DestinationTable1",
+  "WriteMode": "Replace",
+  "PropertyRenames": [
+    { "From": "id", "To": "entityId" },
+    { "From": "etag", "To": "entityEtag" }
+  ]
 }
 ```
 

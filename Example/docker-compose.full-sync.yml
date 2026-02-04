@@ -1,0 +1,18 @@
+# Step 1: Full sync – copy all current data from Azure Table Storage to Cosmos DB Table API.
+# Builds the tool from source (context = repo root). Run from this folder or pass -f path.
+# Usage: ./scripts/run-full-sync.sh   OR   docker compose -f docker-compose.full-sync.yml up
+
+version: "3"
+
+services:
+  dmt:
+    platform: linux/arm64
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        RUNTIME: linux-arm64
+    volumes:
+      - ./config:/config
+      - ./data:/data
+    command: run --settings /config/migrationsettings.full-sync.json
